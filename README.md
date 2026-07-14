@@ -7,7 +7,11 @@ A custom end-to-end A/B testing application built to bridge the gap between rigo
 Unlike standard frequentist calculators that rely on confusing p-values and ignore underlying data skews, this engine utilizes Bayesian probability and automated risk detection to provide actionable, mathematically sound business verdicts.
 
 ## 🚀 Video Demonstration
-<video src="AB_Test_Dashboard.mp4" controls="true" width="100%"></video>
+
+
+https://github.com/user-attachments/assets/dd531855-8f8b-42f1-85a6-8d7ee5ad2399
+
+
 ## 🧠 Core Features
 *   **Bayesian Probability Engine:** Calculates the exact probability of a variation winning using Beta distributions and Monte Carlo simulations.
 *   **Simpson’s Paradox Detection:** Automatically analyzes daily cumulative traffic to flag severe allocation skews that could render the overall mathematical verdict misleading.
