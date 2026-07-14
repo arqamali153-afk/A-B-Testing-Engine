@@ -7,8 +7,7 @@ A custom end-to-end A/B testing application built to bridge the gap between rigo
 Unlike standard frequentist calculators that rely on confusing p-values and ignore underlying data skews, this engine utilizes Bayesian probability and automated risk detection to provide actionable, mathematically sound business verdicts.
 
 ## 🚀 Video Demonstration
-*(Upload your .mp4 file to the GitHub repo, and drag-and-drop it right here to embed the video!)*
-
+<video src="AB_Test_Dashboard.mp4" controls="true" width="100%"></video>
 ## 🧠 Core Features
 *   **Bayesian Probability Engine:** Calculates the exact probability of a variation winning using Beta distributions and Monte Carlo simulations.
 *   **Simpson’s Paradox Detection:** Automatically analyzes daily cumulative traffic to flag severe allocation skews that could render the overall mathematical verdict misleading.
@@ -25,3 +24,5 @@ Unlike standard frequentist calculators that rely on confusing p-values and igno
 *   `app.R`: The core Shiny application and UI/Server logic.
 *   `report.Rmd`: The parameterized RMarkdown file used for PDF generation.
 *   `portfolio_ab_data.csv`: A sample dataset featuring a built-in Simpson's Paradox scenario for testing purposes.
+*   `Executive_Report.pdf`: A sample automated LaTeX report generated directly by the engine.
+*   `your_video_filename.mp4`: A brief video demonstration showcasing the interactive features and Bayesian probability calculations.
