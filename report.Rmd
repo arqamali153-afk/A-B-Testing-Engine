@@ -1,0 +1,248 @@
+---
+title: "Executive A/B Test Report"
+subtitle: "Bayesian Experiment Analysis & Verdict"
+date: "`r Sys.Date()`"
+geometry: "left=0.6in, right=0.6in, top=0.2in, bottom=0.2in"
+output: 
+  pdf_document:
+    latex_engine: pdflatex
+header-includes:
+  - \usepackage{helvet}
+  - \renewcommand{\familydefault}{\sfdefault}
+  - \usepackage{xcolor}
+  - \usepackage{tcolorbox}
+  - \usepackage{fancyhdr}
+  - \usepackage{booktabs}
+  - \usepackage{colortbl}
+  - \pagestyle{fancy}
+  - \fancyhead{}
+  - \fancyfoot[C]{\thepage}
+  - \fancyfoot[R]{\textcolor{gray}{\small Generated via Pure Bayesian Engine}}
+  - \renewcommand{\headrulewidth}{0pt}
+  - \definecolor{primary}{HTML}{2C3E50}
+  - \definecolor{success}{HTML}{10B981}
+params:
+  prob_b: NA
+  verdict: NA
+  rate_a: NA
+  rate_b: NA
+  v_a: NA
+  v_b: NA
+  c_a: NA
+  c_b: NA
+  uplift: NA
+  daily_data: NA
+  guardrail_alert: FALSE
+  simpsons_alert: FALSE
+  simpsons_text: ""
+  req_visitors: NA
+  current_total: NA
+  mde: NA
+  days_left: NA
+  target_power: NA
+  daily_traffic: NA
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+library(ggplot2)
+library(kableExtra)
+```
+
+\begin{tcolorbox}[colback=primary!5!white,colframe=primary,title=\textbf{Executive Verdict}]
+\Large \textbf{Result:} `r params$verdict`
+
+\normalsize
+\textbf{Bayesian Probability:} `r round(params$prob_b * 100, 2)`\% Chance Variation B is Better.
+\end{tcolorbox}
+
+```{r results='asis'}
+if (isTRUE(params$guardrail_alert) || isTRUE(params$simpsons_alert)) {
+  cat("\\vspace{0.4cm}\n")
+  cat("\\begin{tcolorbox}[colback=red!5!white,colframe=red!80!black,title=\\textbf{CRITICAL RISK ALERTS}]\n")
+  
+  if (isTRUE(params$guardrail_alert)) {
+    cat("\\textbf{Guardrail Failure:} Variation B won the primary test, but caused a statistically significant spike in negative events. Deployment is highly risky.\\\\\n\n")
+  }
+  
+  if (isTRUE(params$simpsons_alert)) {
+    cat(paste0("\\textbf{Simpson's Paradox:} ", params$simpsons_text, " The overall mathematical verdict is highly misleading due to traffic allocation skew.\\\\\n"))
+  }
+  
+  cat("\\end{tcolorbox}\n")
+}
+```
+
+## 1. Experiment Overview
+
+```{r}
+ci_lower_a <- round(qbeta(0.025, 1 + params$c_a, 1 + params$v_a - params$c_a) * 100, 2)
+ci_upper_a <- round(qbeta(0.975, 1 + params$c_a, 1 + params$v_a - params$c_a) * 100, 2)
+ci_lower_b <- round(qbeta(0.025, 1 + params$c_b, 1 + params$v_b - params$c_b) * 100, 2)
+ci_upper_b <- round(qbeta(0.975, 1 + params$c_b, 1 + params$v_b - params$c_b) * 100, 2)
+
+df <- data.frame(
+  Metric = c("Total Visitors", "Total Conversions", "Observed Rate", "95% Credible Interval"),
+  `Variation A (Control)` = c(
+    format(params$v_a, big.mark=","), 
+    format(params$c_a, big.mark=","), 
+    paste0(round(params$rate_a * 100, 2), "%"),
+    paste0("[", ci_lower_a, "% - ", ci_upper_a, "%]")
+  ),
+  `Variation B (Challenger)` = c(
+    format(params$v_b, big.mark=","), 
+    format(params$c_b, big.mark=","), 
+    paste0(round(params$rate_b * 100, 2), "%"),
+    paste0("[", ci_lower_b, "% - ", ci_upper_b, "%]")
+  ),
+  check.names = FALSE
+)
+
+kbl(df, booktabs = TRUE, align = "lrr") %>%
+  kable_styling(latex_options = c("striped", "hold_position"), full_width = FALSE, position = "left") %>%
+  row_spec(0, bold = TRUE, color = "white", background = "#2C3E50") %>%
+  column_spec(1, bold = TRUE)
+```
+
+\begin{tcolorbox}[colback=white,colframe=gray!30!white,boxrule=0.5pt,arc=4pt,left=6pt,right=6pt,top=4pt,bottom=4pt,width=0.45\textwidth]
+\textbf{Relative Uplift:} \textcolor{`r if(!is.na(params$uplift) && params$uplift > 0) "success" else "red"`}{\textbf{`r if(!is.na(params$uplift) && params$uplift > 0) "+" else ""` `r round(params$uplift * 100, 2)`\%}}
+\end{tcolorbox}
+
+\vspace{0.1cm}
+\begin{tcolorbox}[colback=white,colframe=gray!30!white,boxrule=0.5pt,arc=4pt,left=6pt,right=6pt,top=4pt,bottom=4pt,width=0.45\textwidth]
+\textbf{Risk of Choosing B:} \textcolor{`r if(!is.na(params$prob_b) && params$prob_b > 0.95) "success" else "red"`}{\textbf{`r round((1 - params$prob_b) * 100, 2)`\%}}
+\end{tcolorbox}
+
+\enlargethispage{1in}
+
+## 2. Posterior Probability Distributions
+
+**Insight Summary:** 
+Based on the current sample of `r format(params$v_a + params$v_b, big.mark=",")` total visitors, Variation B is observing a conversion rate of `r round(params$rate_b * 100, 2)`%. At this stage, the Bayesian engine calculates a `r round(params$prob_b * 100, 2)`% probability that Variation B is the true winner. `r if(!is.na(params$prob_b) && params$prob_b > 0.95) "This result is statistically significant. We recommend deploying Variation B to 100\\% of live traffic." else "This test has not yet reached a 95\\% confidence threshold. We recommend continuing the experiment to collect more data."`
+
+*The chart below visualizes the expected true conversion rates. The peak of each curve represents the most likely conversion rate for that variation based on the observed data.*
+
+```{r fig.pos="H", fig.height=if(isTRUE(params$guardrail_alert) || isTRUE(params$simpsons_alert)) 1.6 else 2.5, fig.width=7.5}
+x <- seq(min(params$rate_a, params$rate_b) * 0.8, max(params$rate_a, params$rate_b) * 1.2, length.out = 1000)
+y_a <- dbeta(x, 1 + params$c_a, 1 + params$v_a - params$c_a)
+y_b <- dbeta(x, 1 + params$c_b, 1 + params$v_b - params$c_b)
+
+df_plot <- data.frame(
+  Rate = c(x, x),
+  Density = c(y_a, y_b),
+  Variation = factor(rep(c("Variation A (Control)", "Variation B (Challenger)"), each = 1000))
+)
+
+ggplot(df_plot, aes(x = Rate, y = Density, fill = Variation, color = Variation)) +
+  geom_area(alpha = 0.45, position = "identity") +
+  geom_vline(xintercept = params$rate_a, linetype = "dashed", color = "#c0392b", linewidth = 0.8, alpha = 0.7) +
+  geom_vline(xintercept = params$rate_b, linetype = "dashed", color = "#138f63", linewidth = 0.8, alpha = 0.7) +
+  scale_fill_manual(values = c("Variation A (Control)" = "#e74c3c", "Variation B (Challenger)" = "#1cc88a")) +
+  scale_color_manual(values = c("Variation A (Control)" = "#c0392b", "Variation B (Challenger)" = "#138f63")) +
+  scale_x_continuous(labels = scales::percent_format(accuracy = 0.1)) +
+  theme_minimal(base_family = "sans") +
+  labs(x = "True Conversion Rate", y = NULL) +
+  theme(
+    legend.position = "top", 
+    legend.title = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.text.y = element_blank(),
+    axis.ticks.y = element_blank(),
+    panel.grid.major.y = element_blank(),
+    plot.margin = margin(t = 5, r = 10, b = 5, l = 10)
+  )
+```
+
+\newpage
+
+## 3. Daily Conversion Trends
+
+```{r fig.height=4.5, fig.width=7.5, results='asis'}
+df_trends <- params$daily_data
+
+# Smart Detection: Check if timeline data was actually passed
+if (is.null(df_trends) || (length(df_trends) == 1 && is.na(df_trends))) {
+  
+  cat("\n*Longitudinal time-series analysis is currently unavailable. This occurs when test data is entered manually or no valid Date/Time column is mapped during the CSV upload.*\n")
+
+} else {
+  
+  # 1. Calculate the total time span of the experiment in days
+  date_span <- as.numeric(max(df_trends$Date, na.rm = TRUE) - min(df_trends$Date, na.rm = TRUE))
+  
+  # 2. Base Plot
+  p <- ggplot(df_trends, aes(x = Date, y = Cumulative_Rate, color = as.factor(Variation), group = Variation)) +
+    geom_line(linewidth = 1.2, alpha = 0.8)
+  
+  # 3. Dynamic Rendering: Only add points if the timeline is short enough to not overlap
+  if (date_span <= 60) {
+    p <- p + geom_point(size = 2.5, fill = "white", shape = 21, stroke = 1.5)
+  }
+  
+  # 4. Smart X-Axis Scaling: Switch from days -> weeks -> months based on the data span
+  if (date_span <= 14) {
+    p <- p + scale_x_date(date_breaks = "1 day", date_labels = "%b %d")
+  } else if (date_span <= 60) {
+    p <- p + scale_x_date(date_breaks = "1 week", date_labels = "%b %d")
+  } else if (date_span <= 180) {
+    p <- p + scale_x_date(date_breaks = "1 month", date_labels = "%b %Y")
+  } else {
+    p <- p + scale_x_date(date_breaks = "3 months", date_labels = "%b %Y")
+  }
+  
+  # 5. Apply final styling
+  p <- p + 
+    scale_color_manual(values = c("#c0392b", "#138f63", "#f39c12", "#8e44ad")) + 
+    scale_y_continuous(labels = scales::percent_format(accuracy = 0.1)) +
+    theme_minimal(base_family = "sans") +
+    labs(x = NULL, y = "Cumulative Conversion Rate") +
+    theme(
+      legend.position = "top", 
+      legend.title = element_blank(),
+      panel.grid.minor = element_blank(),
+      panel.grid.major.x = element_blank(),
+      axis.text.x = element_text(angle = 45, hjust = 1, color = "gray30"),
+      axis.text.y = element_text(color = "gray30"),
+      axis.title.y = element_text(margin = margin(r = 15), color = "gray30", face = "bold"),
+      plot.margin = margin(t = 10, r = 10, b = 10, l = 10)
+    )
+  
+  print(p)
+}
+```
+\vspace{0.6cm}
+
+## 4. Power Analysis & Timeline Verdict
+
+```{r results='asis'}
+if (is.na(params$req_visitors)) {
+  
+  cat("*Power analysis could not be calculated with the current baseline conversion rate.*")
+  
+} else if (params$current_total >= params$req_visitors) {
+  
+  cat("\\begin{tcolorbox}[colback=success!5!white,colframe=success,title=\\textbf{Test is Fully Powered!}]\n")
+  cat("You have enough data to make a confident decision.\\\\\n\n")
+  cat("\\textbf{Data Check:} You have ", format(params$current_total, big.mark=","), " total visitors. You only needed ", format(params$req_visitors, big.mark=","), " to detect a ", params$mde, "\\% change.\\\\\n")
+  cat("\\textbf{Next Step:} Check the Executive Dashboard. If the result is inconclusive, it means the variation truly failed to move the needle. Shut the test down.\n")
+  cat("\\end{tcolorbox}\n")
+  
+} else {
+  
+  deficit <- params$req_visitors - params$current_total
+  
+  cat("\\begin{tcolorbox}[colback=red!5!white,colframe=red!80!black,title=\\textbf{More Data Needed}]\n")
+  cat("Do not stop the test yet. The results are premature.\\\\\n\n")
+  cat("\\textbf{Target:} To reliably detect a ", params$mde, "\\% change, you need \\textbf{", format(params$req_visitors, big.mark=","), "} total visitors.\\\\\n")
+  cat("\\textbf{Current:} You only have ", format(params$current_total, big.mark=","), " visitors right now.\\\\\n")
+  cat("\\textbf{Deficit:} You need \\textbf{", format(deficit, big.mark=","), "} more visitors.\\\\\n\n")
+  cat("\\vspace{0.2cm}\n")
+  cat("\\textbf{Timeline Estimate:} At your configured pace of ", format(params$daily_traffic, big.mark=","), " visitors per day, leave this test running for approximately \\textbf{", params$days_left, " more days} to reach statistical validity.\n")
+  cat("\\end{tcolorbox}\n")
+  
+}
+```
+\vspace{0.8cm}
+\begin{tcolorbox}[colback=white,colframe=gray!40!white,boxrule=0.5pt,title=\textcolor{gray!80!black}{\textbf{Appendix: Statistical Methodology}}]
+\small \textcolor{gray}{This report utilizes a Bayesian statistical framework to evaluate conversion uplift. Posterior probabilities are derived using Beta distributions modeled from an empirical prior (weighted to the pooled baseline conversion rate). The probability of Variation B outperforming Variation A is calculated via 100,000-iteration Monte Carlo simulations. The 95\% credible intervals represent the mathematical bounds of the true conversion rate. Power analysis timelines are calculated assuming a two-sided test with `r params$target_power`\% statistical power and a 5\% significance level.}
+\end{tcolorbox}
