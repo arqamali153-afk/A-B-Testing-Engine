@@ -29,4 +29,4 @@ https://github.com/user-attachments/assets/dd531855-8f8b-42f1-85a6-8d7ee5ad2399
 *   `report.Rmd`: The parameterized RMarkdown file used for PDF generation.
 *   `portfolio_ab_data.csv`: A sample dataset featuring a built-in Simpson's Paradox scenario for testing purposes.
 *   `Executive_Report.pdf`: A sample automated LaTeX report generated directly by the engine.
-*   `your_video_filename.mp4`: A brief video demonstration showcasing the interactive features and Bayesian probability calculations.
+*   `AB_Test_Dashboard.mp4`: A brief video demonstration showcasing the interactive features and Bayesian probability calculations.
